@@ -1,0 +1,19 @@
+using AFI_Game.Controllers;
+using AFI_Game.Models;
+@{
+	ViewData["Title"] = "Start Page";
+}
+
+<div class="text-center">
+	<h1 class="display-4">Welcome @Model.Account.Username</h1>
+
+	@foreach (var game in Model.Games)
+	{
+		<h2>Host: @game.host</h2>
+		<h4>@game.GameStatus</h4>
+		<p>Amount of players: @game.amountOfPlayers</p>
+		<button class="btn btn-primary" id="btn" onclick="joinGame('@game.Id')">Join Game</button>
+	}
+
+</div>
+

@@ -49,7 +49,7 @@ public class AccountController : Controller
 		_context.Account.Add(account);
 		_context.SaveChanges();
 		
-		return View();
+		return View("StartPage", "Game");
 		
 	}
 
