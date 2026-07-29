@@ -11,6 +11,7 @@ public class AccountController : Controller
 	{
 		_context = context;
 	}
+	
 	// Returns the Register view
 	[HttpGet]
 	public IActionResult Register()
@@ -23,6 +24,7 @@ public class AccountController : Controller
 	{
 		if(!ModelState.IsValid)
 		{
+			ModelState.AddModelError(string.Empty, "Unable to register");
 			return View(vm);
 		}
 
@@ -33,23 +35,17 @@ public class AccountController : Controller
 			return View(vm);
 		}
 
-		if(vm.Password != vm.ConfirmPassword)
-		{
-			ModelState.AddModelError(string.Empty, "Passwords do not match");
-			return View(vm);
-		}
-
 		var account = new AccountModel
 		{
 			Username = vm.Username,
 			Password = BCrypt.Net.BCrypt.HashPassword(vm.Password),
 			Wins = 0
-		}
-		;
+		};
+
 		_context.Account.Add(account);
 		_context.SaveChanges();
 		
-		return View("StartPage", "Game");
+		return View("HomePage", "Home");
 		
 	}
 
@@ -75,7 +71,7 @@ public class AccountController : Controller
 			return View(vm);
 		}
 
-		return RedirectToAction("StartPage", "Game");
+		return RedirectToAction("HomePage", "Home");
 	}
 
 	// Returns the Logout view

@@ -6,28 +6,28 @@ public class AppDbContext : DbContext
 	{
 	}
 
-	public DbSet<PlayerModel> Player { get; set; }
-	public DbSet<PlayerCardModel> PlayerCard { get; set; }
-	public DbSet<MovieCardModel> MovieCard { get; set; }
-	public DbSet<GameModel> Game { get; set; }
-	public DbSet<AccountModel> Account { get; set; }
+	public DbSet<Player> Player { get; set; }
+	public DbSet<PlayerCard> PlayerCard { get; set; }
+	public DbSet<MovieCard> MovieCard { get; set; }
+	public DbSet<Game> Game { get; set; }
+	public DbSet<Account> Account { get; set; }
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
 
-		modelBuilder.Entity<PlayerModel>(entity =>
+		modelBuilder.Entity<Player>(entity =>
 		{
 			entity.ToTable("Player");
 			entity.HasKey(e => e.PlayerID);
 			entity.Property(e => e.PlayerID).HasColumnName("player_id");
 			entity.Property(e => e.Points).HasColumnName("points");
-			entity.Property(e => e.OrderNumber).HasColumnName("turn_order");
+			entity.Property(e => e.TurnOrder).HasColumnName("turn_order");
 			entity.Property(e => e.AccountID).HasColumnName("account_id");
 			entity.Property(e => e.GameID).HasColumnName("game_id");
 		});
 
-		modelBuilder.Entity<PlayerCardModel>(entity =>
+		modelBuilder.Entity<PlayerCard>(entity =>
 		{
 			entity.ToTable("PlayerCard");
 			entity.HasKey(e => e.PlayerCardID);
@@ -37,7 +37,7 @@ public class AppDbContext : DbContext
 			entity.Property(e => e.PlayerID).HasColumnName("player_id");
 		});
 
-		modelBuilder.Entity<MovieCardModel>(entity =>
+		modelBuilder.Entity<MovieCard>(entity =>
 		{
 			entity.ToTable("MovieCard");
 			entity.HasKey(e => e.CardID);
@@ -48,17 +48,16 @@ public class AppDbContext : DbContext
 			entity.Property(e => e.Genre).HasColumnName("genre");
 		});
 
-		modelBuilder.Entity<GameModel>(entity =>
+		modelBuilder.Entity<Game>(entity =>
 		{
 			entity.ToTable("Game");
 			entity.HasKey(e => e.GameID);
 			entity.Property(e => e.GameID).HasColumnName("game_id");
 			entity.Property(e => e.GameStatus).HasColumnName("game_status");
 			entity.Property(e => e.CurrentPlayerID).HasColumnName("current_player");
-			entity.Property(e => e.amountOfPlayers).HasColumnName("amount_players");
 		});
 
-		modelBuilder.Entity<AccountModel>(entity =>
+		modelBuilder.Entity<Account>(entity =>
 		{
 			entity.ToTable("Account");
 			entity.HasKey(e => e.AccountID);

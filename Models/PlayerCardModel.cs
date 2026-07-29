@@ -1,5 +1,5 @@
 namespace AFI_Game.Models;
-public class PlayerCardModel
+public class PlayerCard
 {
 	public int PlayerCardID { get; set; }
 	public int Position { get; set; }

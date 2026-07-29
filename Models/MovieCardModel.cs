@@ -1,5 +1,5 @@
 namespace AFI_Game.Models;
-public class MovieCardModel
+public class MovieCard
 {
 	public int CardID { get; set; }
 	public required string Title { get; set; }

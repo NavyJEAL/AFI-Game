@@ -6,11 +6,11 @@ namespace AFI_Game.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly AppDbContext _context;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(AppDbContext context)
     {
-        _logger = logger;
+        _context = context;
     }
 
     public IActionResult Index()
@@ -23,4 +23,9 @@ public class HomeController : Controller
         return View();
     }
 
+	public IActionResult HomePage()
+	{
+		var allGames = _context.Game.ToList();
+		return View(allGames);
+	}
 }

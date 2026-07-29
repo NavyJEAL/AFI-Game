@@ -1,5 +1,5 @@
 namespace AFI_Game.Models;
-public class AccountModel
+public class Account
 {
 	public int AccountID { get; set; }
 	public required string Username { get; set; }

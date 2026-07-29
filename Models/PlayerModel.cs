@@ -1,9 +1,9 @@
 namespace AFI_Game.Models;
-public class PlayerModel
+public class Player
 {
 	public int PlayerID { get; set; }
 	public int Points { get; set; }
-	public int OrderNumber { get; set; }
+	public int TurnOrder { get; set; }
 	public int AccountID { get; set; }
 	public int GameID { get; set; }
 }
