@@ -35,7 +35,7 @@ public class AccountController : Controller
 			return View(vm);
 		}
 
-		var account = new AccountModel
+		var account = new Account
 		{
 			Username = vm.Username,
 			Password = BCrypt.Net.BCrypt.HashPassword(vm.Password),

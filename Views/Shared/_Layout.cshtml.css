@@ -47,3 +47,8 @@ button.accept-policy {
   white-space: nowrap;
   line-height: 60px;
 }
+
+.main_con{
+	display: grid;
+	grid: 50vh 50vh;
+}

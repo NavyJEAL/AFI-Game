@@ -80,11 +80,6 @@ public class GameService
 		return game;
 	}
 
-	public Player GetNextPlayer()
-	{
-		
-	}
-
 	public Game AdvanceTurn(int gameID)
 	{
 		var game = GetGameByID(gameID);
@@ -111,9 +106,61 @@ public class GameService
 		return game;
 	}
 
-	public PlayerCard PlaceCard()
+	public bool PlaceCard(int playerID, int cardID, int position)
 	{
-		
+		var player = _context.Player.Find(playerID);
+		if(player == null)
+		{
+			throw new Exception("Player not found");
+		}
+
+		// hämtar tidslinjen från databasen.
+		var timeline = _context.PlayerCard
+			.Include(pc => pc.MovieCard)
+			.Where(pc => pc.PlayerID == playerID)
+			.OrderBy(pc => pc.Position)
+			.ToList();
+
+		var newCard = _context.MovieCard.Find(cardID);
+		if(newCard == null)
+		{
+			throw new Exception("Card not found");
+		}
+		// left = äldre release year, right nyare release year.
+		var leftCard = timeline.FirstOrDefault(pc => pc.Position == position-1);
+		var rightCard = timeline.FirstOrDefault(pc => pc.Position == position+1);
+
+		var isCorrect = 
+		(leftCard == null || leftCard.MovieCard.ReleaseYear < newCard.ReleaseYear) && 
+		(rightCard == null || rightCard.MovieCard.ReleaseYear > newCard.ReleaseYear);
+
+		if (isCorrect)
+		{
+			// flyttar fram samtliga kort ett steg åt höger från där det nya kortet placeras.
+			foreach (var card in timeline.Where(pc => pc.Position >= position))
+			{
+				card.Position += 1;
+			}
+
+			var playerCard = new PlayerCard
+			{
+				PlayerID = playerID,
+				Position = position,
+				CardID = cardID
+			};
+
+			_context.PlayerCard.Add(playerCard);
+			_context.SaveChanges();
+
+			// Räknar spelarens kort och kontrollerar om det är 10st.
+			var cardCount = _context.PlayerCard.Count(p => p.PlayerID == playerID);
+			if(cardCount == 10)
+			{
+				EndGame(player.GameID, playerID);
+			} 
+		}
+		return isCorrect;
+
 	}
 
 	public int GetPlayerPoints(int gameID, int playerID)
@@ -131,11 +178,6 @@ public class GameService
 		}
 
 		var playerPoints = player.Points;
-
-		if(playerPoints == 10)
-		{
-			EndGame(game.GameID, player.PlayerID);
-		}
 		return playerPoints;
 	}
 
@@ -155,7 +197,7 @@ public class GameService
 			var account = _context.Account.FirstOrDefault(a => a.AccountID == winner.AccountID);
 			if(account != null)
 			{
-				account.Wins =+ 1;
+				account.Wins += 1;
 			}
 		}
 

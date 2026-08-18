@@ -18,7 +18,7 @@ public class AppDbContext : DbContext
 
 		modelBuilder.Entity<Player>(entity =>
 		{
-			entity.ToTable("Player");
+			entity.ToTable("player");
 			entity.HasKey(e => e.PlayerID);
 			entity.Property(e => e.PlayerID).HasColumnName("player_id");
 			entity.Property(e => e.Points).HasColumnName("points");
@@ -29,7 +29,7 @@ public class AppDbContext : DbContext
 
 		modelBuilder.Entity<PlayerCard>(entity =>
 		{
-			entity.ToTable("PlayerCard");
+			entity.ToTable("playercard");
 			entity.HasKey(e => e.PlayerCardID);
 			entity.Property(e => e.PlayerCardID).HasColumnName("playercard_id");
 			entity.Property(e => e.Position).HasColumnName("position");
@@ -39,7 +39,7 @@ public class AppDbContext : DbContext
 
 		modelBuilder.Entity<MovieCard>(entity =>
 		{
-			entity.ToTable("MovieCard");
+			entity.ToTable("moviecard");
 			entity.HasKey(e => e.CardID);
 			entity.Property(e => e.CardID).HasColumnName("card_id");
 			entity.Property(e => e.Title).HasColumnName("movie_title");
@@ -50,7 +50,7 @@ public class AppDbContext : DbContext
 
 		modelBuilder.Entity<Game>(entity =>
 		{
-			entity.ToTable("Game");
+			entity.ToTable("game");
 			entity.HasKey(e => e.GameID);
 			entity.Property(e => e.GameID).HasColumnName("game_id");
 			entity.Property(e => e.GameStatus).HasColumnName("game_status");
@@ -59,7 +59,7 @@ public class AppDbContext : DbContext
 
 		modelBuilder.Entity<Account>(entity =>
 		{
-			entity.ToTable("Account");
+			entity.ToTable("account");
 			entity.HasKey(e => e.AccountID);
 			entity.Property(e => e.AccountID).HasColumnName("account_id");
 			entity.Property(e => e.Username).HasColumnName("account_name");
