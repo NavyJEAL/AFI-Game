@@ -7,6 +7,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<TMDBService>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -25,6 +26,7 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapControllers();
+app.MapHub<AFI_Game.Hubs.GameHub>("/gamehub");
 
 app.MapControllerRoute(
     name: "default",
@@ -33,3 +35,4 @@ app.MapControllerRoute(
 
 
 app.Run();
+	

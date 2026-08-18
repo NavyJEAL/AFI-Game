@@ -1,8 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using AFI_Game.Models;
 using Microsoft.AspNetCore.Mvc;
-using AFI_Game.ViewModels;
 using AFI_Game.Services;
+using Microsoft.AspNetCore.SignalR;
+using AFI_Game.Hubs;
+using AFI_Game.DTO;
+using AFI_Game.Models;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -10,14 +11,94 @@ public class GameAPIController : ControllerBase
 {
 	private readonly AppDbContext _context;
 	private readonly GameService _gameService;
-	public GameAPIController(AppDbContext context, GameService gameService)
+	private readonly IHubContext<GameHub> _hubContext;
+	public GameAPIController(AppDbContext context, GameService gameService, IHubContext<GameHub> hubContext)
 	{
 		_context = context;
 		_gameService = gameService;
+		_hubContext = hubContext;
 	}
 
-	//Get the current game status
-	//PlayerCard stuff like place card
-	//MovieCard stuff like get movie card
+	[HttpPost("create")]
+	public IActionResult CreateGame()
+	{
+		var game = _gameService.CreateGame();
+		return Ok(new { gameId = game.GameID });
+	}
+
+	[HttpPost("{gameId}/join")]
+	public async Task<IActionResult> JoinGame(int gameId, [FromBody] JoinGameRequest request)
+	{
+
+		var player = _gameService.JoinGame(gameId, request.AccountID);
+
+		await _hubContext.Clients.Group($"game-{gameId}")
+			.SendAsync("PlayerJoined", new 
+			{ 
+				playerId = player.PlayerID, 
+				username = player.Account.Username,
+			});
+		
+		var game = _gameService.GetGameByID(gameId);
+		return Ok(game);
+	}
+
+	[HttpPost("{gameId}/start")]
+	public async Task<IActionResult> StartGame(int gameId)
+	{
+		Game game;
+		try
+		{
+			game = _gameService.StartGame(gameId);
+		}
+		catch (Exception ex)
+		{
+			return BadRequest(ex.Message);
+		}
+
+		// Meddela alla spelare i lobbyn att spelet nu startat
+		await _hubContext.Clients.Group($"game-{gameId}")
+			.SendAsync("GameStarted", new
+			{
+				gameId = game.GameID,
+				currentPlayerId = game.CurrentPlayerID
+			});
+
+		return Ok(new
+		{
+			gameId = game.GameID,
+			status = game.GameStatus,
+			currentPlayerId = game.CurrentPlayerID
+		});
+	}
+
+	[HttpGet("{gameId}/status")]
+	public IActionResult GetStatusById(int gameId)
+	{
+		var currentGame = _gameService.GetGameByID(gameId);
+
+		if (currentGame == null)
+			return NotFound();
+
+		return Ok(new
+		{
+			gameId = currentGame.GameID,
+			gameStatus = currentGame.GameStatus,
+			players = currentGame.Players.Select(p => new { p.PlayerID, p.TurnOrder, p.Points })
+		});
+	}
+
+	[HttpPost("{gameId}/end")]
+	public IActionResult EndGame(int gameId, [FromBody] EndGameRequest request)
+	{
+		var game = _gameService.EndGame(gameId, request.WinningPlayerID);
+
+		_hubContext.Clients.Group($"game-{gameId}")
+			.SendAsync("GameEnded", new { winnerId = request.WinningPlayerID });
+
+		return Ok(new { gameId = game.GameID, status = game.GameStatus });
+	}
+
+	// Behöver lägga till place card och draw card här
 
 }

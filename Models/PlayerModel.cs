@@ -6,4 +6,5 @@ public class Player
 	public int TurnOrder { get; set; }
 	public int AccountID { get; set; }
 	public int GameID { get; set; }
+	public Account? Account { get; set; }
 }

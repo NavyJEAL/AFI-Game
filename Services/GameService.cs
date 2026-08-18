@@ -47,7 +47,8 @@ public class GameService
 			throw new Exception("Has already joined a game");
 		}
 
-		var player = new Player{ 
+		var player = new Player
+		{
 			AccountID = accountID,
     		GameID = gameID,
     		Points = 0,
