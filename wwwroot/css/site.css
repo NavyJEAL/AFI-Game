@@ -43,3 +43,16 @@ body {
 .login button{
 	margin: 12px auto;
 }
+
+.register{
+	width: 50%;
+	justify-self: center;
+}
+
+.register h1{
+	place-self: center;
+}
+
+.register button{
+	margin: 12px auto;
+}

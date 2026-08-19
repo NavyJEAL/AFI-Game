@@ -8,6 +8,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<TMDBService>();
 builder.Services.AddSignalR();
+builder.Services.AddScoped<AFI_Game.Services.MovieCardService>();
 
 var app = builder.Build();
 

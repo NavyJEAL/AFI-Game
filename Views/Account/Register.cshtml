@@ -3,18 +3,19 @@
 	ViewData["Title"] = "Register";
 }
 
-<div class="Register">
+<div class="register">
 	<div>
+		<h1>Register</h1>
 		<form method="post" asp-action="Register">
-			<div asp-validation-summary="All" class="text-danger">
-				<label asp-for="Username">Username</label>
-				<input asp-for="Username" class="form-control" required/>
+			<div class="form">
+				<label for="username">Username</label>
+				<input type="text" class="form-control" id="username" name="username" required />
 				
-				<label asp-for="Password">Password</label>
-				<input asp-for="Password" class="form-control" required/>
+				<label for="password">Password</label>
+				<input type="password" class="form-control" id="password" name="password" required/>
 
-				<label asp-for="ConfirmPassword">Confirm Password</label>
-				<input asp-for="ConfirmPassword" class="form-control" required/>
+				<label for="confirmPassword">Confirm Password</label>
+				<input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required/>
 			</div>
 			<button type="submit" class="btn btn-primary">Register</button>
 		</form>

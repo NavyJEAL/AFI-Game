@@ -12,11 +12,13 @@ public class GameAPIController : ControllerBase
 	private readonly AppDbContext _context;
 	private readonly GameService _gameService;
 	private readonly IHubContext<GameHub> _hubContext;
-	public GameAPIController(AppDbContext context, GameService gameService, IHubContext<GameHub> hubContext)
+	private readonly MovieCardService _movieCardService;
+	public GameAPIController(AppDbContext context, GameService gameService, IHubContext<GameHub> hubContext, MovieCardService movieCardService)
 	{
 		_context = context;
 		_gameService = gameService;
 		_hubContext = hubContext;
+		_movieCardService = movieCardService;
 	}
 
 	[HttpPost("create")]
@@ -99,6 +101,29 @@ public class GameAPIController : ControllerBase
 		return Ok(new { gameId = game.GameID, status = game.GameStatus });
 	}
 
-	// Behöver lägga till place card och draw card här
+	[HttpGet("{gameId}/drawcard")]
+	public IActionResult DrawCard(int gameId)
+	{
+		var card = _movieCardService.GetRandomUnusedCard(gameId);
+
+		if (card == null)
+		{
+			return NotFound("No more available cards");
+		}
+
+		return Ok(new
+		{
+			cardId = card.CardID,
+			title = card.Title,
+			director = card.Director,
+		});
+	}
+
+	[HttpPost("{gameId}/placecard")]
+	public IActionResult PlaceCard()
+	{
+		// Implementera logik för att placera kortet i spelet
+		return Ok();
+	}
 
 }
