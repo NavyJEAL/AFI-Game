@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using AFI_Game.Services;
+using AFI_Game.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,9 +9,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+		options.LogoutPath = "/Account/Logout";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+		options.SlidingExpiration = true;
+    });
 builder.Services.AddHttpClient<TMDBService>();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<AFI_Game.Services.MovieCardService>();
+builder.Services.AddScoped<MovieCardService>();
+builder.Services.AddScoped<GameService>();
 
 var app = builder.Build();
 
@@ -23,11 +35,12 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapControllers();
-app.MapHub<AFI_Game.Hubs.GameHub>("/gamehub");
+app.MapHub<GameHub>("/gamehub");
 
 app.MapControllerRoute(
     name: "default",

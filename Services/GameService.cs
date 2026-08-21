@@ -16,15 +16,33 @@ public class GameService
 
 	public Game? GetGameByID(int gameID)
 	{
-		return _context.Game.Include(g => g.Players).FirstOrDefault(g => g.GameID == gameID);
+		return _context.Game
+			.Include(g => g.Players)
+			.ThenInclude(p => p.Account)
+			.FirstOrDefault(g => g.GameID == gameID);
 	}
 	
-	public Game CreateGame()
+	public Player CreateGame(int accountID)
 	{
 		var game = new Game {GameStatus = "Waiting"};
 		_context.Game.Add(game);
 		_context.SaveChanges();
-		return game;
+
+		var player = new Player
+		{
+			AccountID = accountID,
+			GameID = game.GameID,
+			Points = 0,
+			TurnOrder = 1
+		};
+		_context.Player.Add(player);
+		_context.SaveChanges();
+
+		_context.Entry(player)
+			.Reference(p => p.Account)
+			.Load();
+		
+		return player;
 	}
 
 	public Player JoinGame(int gameID, int accountID)
@@ -57,7 +75,43 @@ public class GameService
 
 		_context.Player.Add(player);
 		_context.SaveChanges();
+		_context.Entry(player)
+			.Reference(p => p.Account)
+			.Load();
+
 		return player;
+	}
+
+	public void LeaveGame(int gameID, int accountID)
+	{
+		var game = GetGameByID(gameID);
+		if(game == null)
+		{
+			throw new Exception("Game not found");
+		}
+
+		var player = game.Players.FirstOrDefault(p => p.AccountID == accountID);
+		if(player == null)
+		{
+			throw new Exception("Player not found in this game");
+		}
+		_context.Player.Remove(player);
+		_context.SaveChanges();
+
+		var remainingPlayers = _context.Player.Count(p => p.GameID == gameID);
+		if(remainingPlayers == 0)
+		{
+			_context.Game.Remove(game);
+			_context.SaveChanges();
+		}else
+		{
+			var orderedPlayers = game.Players.OrderBy(p => p.TurnOrder).ToList();
+			for(int i = 0; i < orderedPlayers.Count; i++)
+			{
+				orderedPlayers[i].TurnOrder = i + 1;
+			}
+			_context.SaveChanges();
+		}
 	}
 
 	public Game StartGame(int gameID)

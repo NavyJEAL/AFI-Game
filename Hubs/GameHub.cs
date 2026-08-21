@@ -8,5 +8,15 @@ namespace AFI_Game.Hubs
 		{
 			await Groups.AddToGroupAsync(Context.ConnectionId, $"game-{gameId}");
 		}
+
+		public async Task LeaveLobbyGroup(int gameId)
+		{
+			await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"game-{gameId}");
+		}
+
+		public async Task JoinLobbyListGroup()
+		{
+			await Groups.AddToGroupAsync(Context.ConnectionId, "lobby-list");
+		}
 	}
 }

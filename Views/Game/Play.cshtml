@@ -1,0 +1,42 @@
+@model AFI_Game.Models.Game
+@{
+    ViewData["Title"] = "Playing";
+}
+
+<div class="text-center">
+    <h1>Game in progress</h1>
+    <h4>Status: @Model.GameStatus</h4>
+
+    <div id="timeline">
+        <!-- Spelarens tidslinje renderas här via JavaScript -->
+    </div>
+
+    <div id="current-card">
+        <!-- Det aktuella dragna kortet visas här -->
+    </div>
+
+    <button type="button" class="btn btn-primary" onclick="DrawCard()">
+        Draw Card
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        async function DrawCard() {
+            const response = await fetch(`/api/GameAPI/@Model.GameID/drawcard`);
+            if (response.ok) {
+                const card = await response.json();
+                document.getElementById('current-card').innerHTML =
+                    `<p>${card.title} — directed by ${card.director}</p>`;
+            }
+        }
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/gamehub")
+            .build();
+
+        connection.start().then(() => {
+            connection.invoke("JoinLobbyGroup", @Model.GameID);
+        });
+    </script>
+}

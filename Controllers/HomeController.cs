@@ -1,6 +1,7 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using AFI_Game.Models;
+using AFI_Game.ViewModels;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AFI_Game.Controllers;
 
@@ -23,9 +24,18 @@ public class HomeController : Controller
         return View();
     }
 
+	[Authorize]
 	public IActionResult HomePage()
 	{
-		var allGames = _context.Game.ToList();
-		return View(allGames);
+		var username = User.Identity?.Name;
+		var allGames = _context.Game.Include(g => g.Players).ToList();
+
+		var viewModel = new HomePageViewModel
+		{
+			Username = username,
+			AccountID = _context.Account.FirstOrDefault(a => a.Username == username)?.AccountID ?? 0,
+			Games = allGames
+		};
+		return View(viewModel);
 	}
 }

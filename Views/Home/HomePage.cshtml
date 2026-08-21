@@ -1,19 +1,79 @@
-using AFI_Game.Controllers;
-using AFI_Game.Models;
+@model AFI_Game.ViewModels.HomePageViewModel
 @{
-	ViewData["Title"] = "Start Page";
+	ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
-	<h1 class="display-4">Welcome @Model.Account.Username</h1>
+	<h1>Welcome @Model.Username</h1>
 
-	@foreach (var game in Model.Games)
+	@if(Model.Games.Count == 0)
 	{
-		<h2>Host: @game.host</h2>
-		<h4>@game.GameStatus</h4>
-		<p>Amount of players: @game.amountOfPlayers</p>
-		<button class="btn btn-primary" id="btn" onclick="JoinGame('@game.Id')">Join Game</button>
+		<h4>No games available :(</h4>
+	}
+	else
+	{
+		<p><strong>Available Games</strong></p>
+		@foreach (var game in Model.Games)
+		{
+			<div class="game-card">
+				<h4>@game.GameStatus</h4>
+				<p>Amount of players: @game.Players.Count</p>
+				<button class="btn btn-primary" onclick="JoinGame('@game.GameID')">Join Game</button>
+			</div>
+		}
 	}
 
+	<button type="button" class="btn btn-primary" onclick="CreateGame()">
+		Create Game
+	</button>
 </div>
+
+@section Scripts {
+<script>
+	console.log("SCRIPT LOADED");
+
+	async function JoinGame(gameID) {
+		const response = await fetch(`/api/GameAPI/${gameID}/join`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ accountID: @Model.AccountID })
+		});
+
+		if (response.ok) {
+			window.location.href = `/Game/Lobby/${gameID}`;
+		}
+	}
+
+	async function CreateGame() {
+		const response = await fetch('/api/GameAPI/create', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ accountID: @Model.AccountID })
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			window.location.href = `/Game/Lobby/${data.gameId}`;
+		}
+	}
+
+	const connection = new signalR.HubConnectionBuilder()
+		.withUrl("/gamehub")
+		.build();
+
+	connection.on("GameListChanged", () => {
+		console.log("Event mottaget!");
+		location.reload();
+	});
+
+	connection.start()
+		.then(() => {
+			console.log("SignalR ansluten");
+			connection.invoke("JoinLobbyListGroup");
+		})
+		.catch(err => console.error("SignalR misslyckades:", err));
+</script>
+}
+
+
 

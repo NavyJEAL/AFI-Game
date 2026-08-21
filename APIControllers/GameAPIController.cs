@@ -22,10 +22,12 @@ public class GameAPIController : ControllerBase
 	}
 
 	[HttpPost("create")]
-	public IActionResult CreateGame()
+	public async Task<IActionResult> CreateGame( [FromBody] CreateGameRequest request)
 	{
-		var game = _gameService.CreateGame();
-		return Ok(new { gameId = game.GameID });
+		var player = _gameService.CreateGame(request.AccountID);
+		await _hubContext.Clients.Group("lobby-list").SendAsync("GameListUpdated");
+
+		return Ok(new { gameId = player.GameID, playerId = player.PlayerID });
 	}
 
 	[HttpPost("{gameId}/join")]
@@ -43,6 +45,26 @@ public class GameAPIController : ControllerBase
 		
 		var game = _gameService.GetGameByID(gameId);
 		return Ok(game);
+	}
+
+	[HttpPost("{gameId}/leave")]
+	public async Task<IActionResult> LeaveGame(int gameId, [FromBody] LeaveGameRequest request)
+	{
+		try
+		{
+			_gameService.LeaveGame(gameId, request.AccountID);
+		}
+		catch (Exception ex)
+		{
+			return BadRequest(ex.Message);
+		}
+
+		await _hubContext.Clients.Group($"game-{gameId}")
+			.SendAsync("PlayerLeft", new {accountId = request.AccountID});
+		
+		await _hubContext.Clients.Group("lobby-list").SendAsync("GameListUpdated");
+		
+		return Ok(new { message = "Player left the game" });
 	}
 
 	[HttpPost("{gameId}/start")]

@@ -56,3 +56,11 @@ body {
 .register button{
 	margin: 12px auto;
 }
+
+.game-card {
+	width: 300px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}

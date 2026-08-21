@@ -1,0 +1,66 @@
+@model AFI_Game.Models.Game
+@{
+	ViewData["Title"] = "Game Lobby";
+}
+
+<div class="text-center">
+    <h1>Welcome to the Game Lobby</h1>
+    <h3>Players:</h3>
+
+    @foreach (var player in Model.Players)
+    {
+        <p>@player.Account.Username</p>
+    }
+
+	<div>
+		<button type="button" class="btn btn-primary" onclick="StartGame()">
+			Start Game
+		</button>
+		<button type="button" class="btn btn-danger" onclick="LeaveGame(@Model.GameID, @Model.???AccountID)">
+			Leave Game
+		</button>
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		async function StartGame() {
+			const response = await fetch(`/api/GameAPI/@Model.GameID/start`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+			if (response.ok) {
+				window.location.href = `/Game/Play/@Model.GameID`;
+			} else {
+				const error = await response.text();
+				alert(`Kunde inte starta spelet: ${error}`);
+			}
+		}
+
+		async function LeaveGame(gameId, accountId) {
+			fetch(`/api/GameAPI/${gameId}/leave`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ accountId: accountId })
+			})
+			.then(() => {
+				window.location.href = '/home/homepage';
+			});
+		}
+
+		const connection = new signalR.HubConnectionBuilder()
+			.withUrl("/gamehub")
+			.build();
+
+		connection.on("GameStarted", (data) => {
+			window.location.href = `/Game/Play/${data.gameId}`;
+		});
+
+		connection.start().then(() => {
+			connection.invoke("JoinLobbyGroup", @Model.GameID);
+		});
+	</script>
+}
+
