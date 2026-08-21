@@ -21,6 +21,7 @@ builder.Services.AddHttpClient<TMDBService>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<MovieCardService>();
 builder.Services.AddScoped<GameService>();
+builder.Services.AddScoped<PlayerService>();
 
 var app = builder.Build();
 

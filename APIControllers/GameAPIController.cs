@@ -13,10 +13,12 @@ public class GameAPIController : ControllerBase
 	private readonly GameService _gameService;
 	private readonly IHubContext<GameHub> _hubContext;
 	private readonly MovieCardService _movieCardService;
-	public GameAPIController(AppDbContext context, GameService gameService, IHubContext<GameHub> hubContext, MovieCardService movieCardService)
+	private readonly PlayerService _playerService;
+	public GameAPIController(AppDbContext context, GameService gameService, IHubContext<GameHub> hubContext, MovieCardService movieCardService, PlayerService playerService)
 	{
 		_context = context;
 		_gameService = gameService;
+		_playerService = playerService;
 		_hubContext = hubContext;
 		_movieCardService = movieCardService;
 	}
@@ -142,10 +144,55 @@ public class GameAPIController : ControllerBase
 	}
 
 	[HttpPost("{gameId}/placecard")]
-	public IActionResult PlaceCard()
+	public async Task<IActionResult> PlaceCard(int gameId, [FromBody] PlaceCardRequest request)
 	{
-		// Implementera logik för att placera kortet i spelet
-		return Ok();
+		bool isCorrect;
+		try
+		{
+			isCorrect = _gameService.PlaceCard(request.PlayerId, request.CardId, request.Position);
+		}
+		catch (Exception ex)
+		{
+			return BadRequest(ex.Message);
+		}
+
+		if (isCorrect)
+		{
+			await _hubContext.Clients.Group($"game-{gameId}")
+				.SendAsync("CardPlaced", new
+				{
+					playerId = request.PlayerId,
+					cardId = request.CardId,
+					correct = true
+				});
+		}
+		else
+		{
+			var game = _gameService.AdvanceTurn(gameId);
+
+			await _hubContext.Clients.Group($"game-{gameId}")
+				.SendAsync("TurnChanged", new
+				{
+					currentPlayerId = game.CurrentPlayerID
+				});
+		}
+
+		return Ok(new { correct = isCorrect });
+	}
+
+	[HttpGet("{gameId}/player/{playerId}/timeline")]
+	public IActionResult GetTimeline(int gameId, int playerId)
+	{
+		var timeline = _playerService.GetPlayerTimeline(playerId)
+			.Select(pc => new
+			{
+				position = pc.Position,
+				title = pc.MovieCard.Title,
+				releaseYear = pc.MovieCard.ReleaseYear
+			})
+			.ToList();
+
+		return Ok(timeline);
 	}
 
 }

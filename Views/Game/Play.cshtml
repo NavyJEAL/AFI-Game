@@ -1,42 +1,132 @@
-@model AFI_Game.Models.Game
-@{
-    ViewData["Title"] = "Playing";
-}
-
 <div class="text-center">
     <h1>Game in progress</h1>
     <h4>Status: @Model.GameStatus</h4>
+    <p id="turn-indicator"></p>
 
-    <div id="timeline">
-        <!-- Spelarens tidslinje renderas här via JavaScript -->
-    </div>
+    <div id="timeline" class="d-flex justify-content-center gap-2 my-4"></div>
 
-    <div id="current-card">
-        <!-- Det aktuella dragna kortet visas här -->
-    </div>
+    <div id="current-card"></div>
 
-    <button type="button" class="btn btn-primary" onclick="DrawCard()">
+    <button type="button" class="btn btn-primary" id="draw-btn" onclick="DrawCard()">
         Draw Card
     </button>
 </div>
 
 @section Scripts {
     <script>
-        async function DrawCard() {
-            const response = await fetch(`/api/GameAPI/@Model.GameID/drawcard`);
-            if (response.ok) {
-                const card = await response.json();
-                document.getElementById('current-card').innerHTML =
-                    `<p>${card.title} — directed by ${card.director}</p>`;
+        const gameId = @Model.GameID;
+        const playerId = @ViewBag.PlayerId;
+        let currentPlayerId = @ViewBag.CurrentPlayerId;
+
+        function UpdateTurnUI() {
+            const drawBtn = document.getElementById('draw-btn');
+            const turnIndicator = document.getElementById('turn-indicator');
+
+            if (currentPlayerId === playerId) {
+                turnIndicator.innerText = "It's your turn!";
+                drawBtn.disabled = false;
+            } else {
+                turnIndicator.innerText = "Waiting for other player...";
+                drawBtn.disabled = true;
             }
+        }
+
+		let drawnCard = null;
+
+		async function LoadTimeline() {
+			const response = await fetch(`/api/GameAPI/${gameId}/player/${playerId}/timeline`);
+			if (!response.ok) return;
+
+			const cards = await response.json();
+			const timelineDiv = document.getElementById('timeline');
+			timelineDiv.innerHTML = '';
+
+			timelineDiv.appendChild(CreateSlot(0));
+
+			cards.forEach((card, index) => {
+				const cardEl = document.createElement('div');
+				cardEl.className = 'border p-2';
+				cardEl.innerHTML = `<strong>${card.title}</strong><br>${card.releaseYear}`;
+				timelineDiv.appendChild(cardEl);
+
+				timelineDiv.appendChild(CreateSlot(index + 1));
+			});
+		}
+
+		function CreateSlot(position) {
+			const slot = document.createElement('div');
+			slot.className = 'slot border border-dashed p-2';
+			slot.style.width = '30px';
+			slot.style.cursor = 'pointer';
+			slot.innerText = '+';
+			slot.onclick = () => PlaceCard(position);
+			return slot;
+		}
+
+        async function DrawCard() {
+			const response = await fetch(`/api/GameAPI/${gameId}/drawcard`);
+			if (response.ok) {
+				drawnCard = await response.json();
+				document.getElementById('current-card').innerHTML =
+					`<p>${drawnCard.title} — directed by ${drawnCard.director}</p>
+					<p><em>Click a slot on the timeline to place it</em></p>`;
+				document.getElementById('draw-btn').disabled = true;
+			}
+		}
+
+        async function PlaceCard(position) {
+            if (!drawnCard) {
+                alert('Draw a card first!');
+                return;
+            }
+
+            const response = await fetch(`/api/GameAPI/${gameId}/placecard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    playerId: playerId,
+                    cardId: drawnCard.cardId,
+                    position: position
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.correct) {
+                alert('Correct! Card added to your timeline.');
+            } else {
+                alert('Wrong placement! Turn passes to next player.');
+            }
+
+            drawnCard = null;
+            document.getElementById('current-card').innerHTML = '';
+            document.getElementById('draw-btn').disabled = false;
+            LoadTimeline();
         }
 
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/gamehub")
             .build();
 
+		connection.on("TurnChanged", (data) => {
+			currentPlayerId = data.currentPlayerId;
+			UpdateTurnUI();
+		});
+
+		connection.on("CardPlaced", (data) => {
+			if (data.playerId !== playerId) {
+				console.log(`Player ${data.playerId} placed a card correctly.`);
+			} else {
+				LoadTimeline();
+			}
+		});
+
         connection.start().then(() => {
-            connection.invoke("JoinLobbyGroup", @Model.GameID);
+            connection.invoke("JoinLobbyGroup", gameId);
         });
+
+        LoadTimeline();
+        UpdateTurnUI();
     </script>
+}
 }
