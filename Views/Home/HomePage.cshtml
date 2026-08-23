@@ -61,7 +61,7 @@
 		.withUrl("/gamehub")
 		.build();
 
-	connection.on("GameListChanged", () => {
+	connection.on("GameListUpdated", () => {
 		console.log("Event mottaget!");
 		location.reload();
 	});

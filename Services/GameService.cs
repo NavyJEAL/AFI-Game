@@ -8,10 +8,12 @@ namespace AFI_Game.Services;
 public class GameService
 {
 	private readonly AppDbContext _context;
+	private readonly MovieCardService _movieCardService;
 	
-	public GameService(AppDbContext context)
+	public GameService(AppDbContext context, MovieCardService movieCardService)
 	{
 		_context = context;
+		_movieCardService = movieCardService;
 	}
 
 	public Game? GetGameByID(int gameID)
@@ -130,6 +132,22 @@ public class GameService
 		game.GameStatus = "Active";
 		var firstPlayer = game.Players.OrderBy(p => p.TurnOrder).First();
 		game.CurrentPlayerID = firstPlayer.PlayerID;
+
+		foreach (var player in game.Players)
+		{
+			var startCard = _movieCardService.GetRandomUnusedCard(gameID);
+			if(startCard != null)
+			{
+				var playerCard = new PlayerCard
+				{
+					PlayerID = player.PlayerID,
+					CardID = startCard.CardID,
+					Position = 0
+				};
+				_context.PlayerCard.Add(playerCard);
+			}
+		}
+
 		_context.SaveChanges();
 		
 		return game;
@@ -183,11 +201,11 @@ public class GameService
 		}
 		// left = äldre release year, right nyare release year.
 		var leftCard = timeline.FirstOrDefault(pc => pc.Position == position-1);
-		var rightCard = timeline.FirstOrDefault(pc => pc.Position == position+1);
+		var rightCard = timeline.FirstOrDefault(pc => pc.Position == position);
 
 		var isCorrect = 
-		(leftCard == null || leftCard.MovieCard.ReleaseYear < newCard.ReleaseYear) && 
-		(rightCard == null || rightCard.MovieCard.ReleaseYear > newCard.ReleaseYear);
+		(leftCard == null || leftCard.MovieCard.ReleaseYear <= newCard.ReleaseYear) && 
+		(rightCard == null || rightCard.MovieCard.ReleaseYear >= newCard.ReleaseYear);
 
 		if (isCorrect)
 		{
@@ -256,6 +274,7 @@ public class GameService
 			}
 		}
 
+		game.GameStatus = "Ended";
 		_context.SaveChanges();
 		
 		return game;

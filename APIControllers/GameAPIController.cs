@@ -156,6 +156,20 @@ public class GameAPIController : ControllerBase
 			return BadRequest(ex.Message);
 		}
 
+		var game = _gameService.GetGameByID(gameId);
+		if (game != null && game.GameStatus == "Ended")
+		{
+			var winner = _playerService.GetPlayerByID(request.PlayerId);
+			await _hubContext.Clients.Group($"game-{gameId}")
+				.SendAsync("GameEnded", new
+				{
+					winnerId = request.PlayerId,
+					winnerName = winner?.Account?.Username ?? "Unknown"
+				});
+
+			return Ok(new { correct = isCorrect, gameEnded = true });
+		}
+
 		if (isCorrect)
 		{
 			await _hubContext.Clients.Group($"game-{gameId}")
@@ -168,16 +182,16 @@ public class GameAPIController : ControllerBase
 		}
 		else
 		{
-			var game = _gameService.AdvanceTurn(gameId);
+			var updatedGame = _gameService.AdvanceTurn(gameId);
 
 			await _hubContext.Clients.Group($"game-{gameId}")
 				.SendAsync("TurnChanged", new
 				{
-					currentPlayerId = game.CurrentPlayerID
+					currentPlayerId = updatedGame.CurrentPlayerID
 				});
 		}
 
-		return Ok(new { correct = isCorrect });
+		return Ok(new { correct = isCorrect, gameEnded = false });
 	}
 
 	[HttpGet("{gameId}/player/{playerId}/timeline")]

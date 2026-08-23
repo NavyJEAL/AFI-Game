@@ -1,6 +1,6 @@
 <div class="text-center">
     <h1>Game in progress</h1>
-    <h4>Status: @Model.GameStatus</h4>
+	<h4>Current player: <span id="current-player-name">@ViewBag.CurrentPlayer</span></h4>
     <p id="turn-indicator"></p>
 
     <div id="timeline" class="d-flex justify-content-center gap-2 my-4"></div>
@@ -10,6 +10,10 @@
     <button type="button" class="btn btn-primary" id="draw-btn" onclick="DrawCard()">
         Draw Card
     </button>
+
+	<div class="mt-4" id="back-home-btn" style="display: none;">
+		<a href="/Home/HomePage" class="btn btn-secondary">Back to Home</a>
+	</div>
 </div>
 
 @section Scripts {
@@ -17,19 +21,28 @@
         const gameId = @Model.GameID;
         const playerId = @ViewBag.PlayerId;
         let currentPlayerId = @ViewBag.CurrentPlayerId;
+		const players = {
+		@foreach (var p in Model.Players)
+			{
+				@:@p.PlayerID: "@p.Account.Username",
+			}
+		};
 
         function UpdateTurnUI() {
-            const drawBtn = document.getElementById('draw-btn');
-            const turnIndicator = document.getElementById('turn-indicator');
+			const drawBtn = document.getElementById('draw-btn');
+			const turnIndicator = document.getElementById('turn-indicator');
+			const currentPlayerName = document.getElementById('current-player-name');
 
-            if (currentPlayerId === playerId) {
-                turnIndicator.innerText = "It's your turn!";
-                drawBtn.disabled = false;
-            } else {
-                turnIndicator.innerText = "Waiting for other player...";
-                drawBtn.disabled = true;
-            }
-        }
+			currentPlayerName.innerText = players[currentPlayerId] ?? "Unknown";
+
+			if (currentPlayerId === playerId) {
+				turnIndicator.innerText = "It's your turn!";
+				drawBtn.disabled = false;
+			} else {
+				turnIndicator.innerText = "Waiting for other player...";
+				drawBtn.disabled = true;
+			}
+		}
 
 		let drawnCard = null;
 
@@ -92,15 +105,16 @@
 
             const result = await response.json();
 
-            if (result.correct) {
-                alert('Correct! Card added to your timeline.');
-            } else {
-                alert('Wrong placement! Turn passes to next player.');
-            }
+			if (result.gameEnded) {
+			} else if (result.correct) {
+				alert('Correct! Card added to your timeline.');
+			} else {
+				alert('Wrong placement! Turn passes to next player.');
+			}
 
             drawnCard = null;
             document.getElementById('current-card').innerHTML = '';
-            document.getElementById('draw-btn').disabled = false;
+            UpdateTurnUI();
             LoadTimeline();
         }
 
@@ -121,6 +135,12 @@
 			}
 		});
 
+		connection.on("GameEnded", (data) => {
+			alert(`Game ended! Winner: ${data.winnerName}`);
+			document.getElementById('draw-btn').disabled = true;
+			document.getElementById('back-home-btn').style.display = 'block';
+		});
+
         connection.start().then(() => {
             connection.invoke("JoinLobbyGroup", gameId);
         });
@@ -128,5 +148,4 @@
         LoadTimeline();
         UpdateTurnUI();
     </script>
-}
 }

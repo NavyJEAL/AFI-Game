@@ -16,7 +16,7 @@
 		<button type="button" class="btn btn-primary" onclick="StartGame()">
 			Start Game
 		</button>
-		<button type="button" class="btn btn-danger" onclick="LeaveGame(@Model.GameID, @Model.???AccountID)">
+		<button type="button" class="btn btn-danger" onclick="LeaveGame(@Model.GameID, @ViewBag.AccountID)">
 			Leave Game
 		</button>
 	</div>
@@ -56,6 +56,14 @@
 
 		connection.on("GameStarted", (data) => {
 			window.location.href = `/Game/Play/${data.gameId}`;
+		});
+
+		connection.on("PlayerJoined", (data) => {
+			location.reload();
+		});
+
+		connection.on("PlayerLeft", (data) =>{
+			location.reload();
 		});
 
 		connection.start().then(() => {

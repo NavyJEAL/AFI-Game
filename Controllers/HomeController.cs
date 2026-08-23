@@ -28,7 +28,10 @@ public class HomeController : Controller
 	public IActionResult HomePage()
 	{
 		var username = User.Identity?.Name;
-		var allGames = _context.Game.Include(g => g.Players).ToList();
+		var allGames = _context.Game
+			.Include(g => g.Players)
+			.Where(g => g.GameStatus == "Waiting")
+			.ToList();
 
 		var viewModel = new HomePageViewModel
 		{

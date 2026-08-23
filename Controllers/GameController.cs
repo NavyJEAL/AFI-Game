@@ -14,20 +14,21 @@ public class GameController : Controller
 		_gameService = gameService;
 		_playerService = playerService;
 	}
-	public IActionResult Lobby(int ID)
+	public IActionResult Lobby(int id)
 	{
-		var game = _gameService.GetGameByID(ID);
+		var game = _gameService.GetGameByID(id);
+		if (game == null) return NotFound();
 
-		if (game == null)
-		{
-			return NotFound();
-		}
+		var accountIdString = User.FindFirst("AccountID")?.Value;
+		ViewBag.AccountID = int.Parse(accountIdString);
 
 		return View(game);
 	}
 
+	[HttpGet("Game/Play/{gameId}")]
 	public IActionResult Play(int gameID)
 	{
+		Console.WriteLine($"Play called with gameId: {gameID}");
 		var game = _gameService.GetGameByID(gameID);
 
 		if (game == null)
@@ -44,8 +45,11 @@ public class GameController : Controller
             return Forbid();
         }
 
+		var currentPlayer = game.Players.FirstOrDefault(p => p.PlayerID == game.CurrentPlayerID);
+
         ViewBag.PlayerID = player.PlayerID;
 		ViewBag.CurrentPlayerID = game.CurrentPlayerID;
+		ViewBag.CurrentPlayer = currentPlayer?.Account?.Username ?? "Unknown";
         return View(game);
     }
 }
